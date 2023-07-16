@@ -104,20 +104,19 @@ class UserStrategy(bt.Strategy):
         
         # Sell price condition
         sell_price_conditions = self.params.sell_criteria.get('price', {}).get('conditions', [])
-        print("sell_price_conditions",sell_price_conditions)
         for condition in sell_price_conditions:
             self.sell_indicators.append(('price', condition['value'], condition['operation']))
         # Sell indicator conditions
         sell_indicator_conditions = self.params.sell_criteria.get('indicators', {}).get('conditions', [])
-        print("sell_price_conditions",sell_indicator_conditions)
         for condition in sell_indicator_conditions:
             self.sell_indicators.append((condition['name'], condition['value'], condition['operation']))
             # Initiliaze EMAs
             if condition['name'] == "ema":
                 ema_name = "ema-" + str(condition['value'])
                 setattr(self.data, ema_name, bt.indicators.ExponentialMovingAverage(self.data.close, period=condition['value']))
-
+        print("buy_price_conditions",buy_price_conditions)
         print("buy_indicators::", self.buy_indicators)
+        print("sell_price_conditions",sell_price_conditions)
         print("sell_indicators::", self.sell_indicators)
 
     def next(self):
@@ -203,32 +202,31 @@ with open('systemPrompt.json') as f:
 # ###############################################################################################
 # ###############################################################################################
 # ###############################################################################################
-
-# response = openai.ChatCompletion.create(
-#   model="gpt-3.5-turbo",
-#   messages=[
-#        {
-#         "role": "system",
-#         "content": systemPrompt
-#         },
-#         {
-#         "role": "user",
-#         "content": "buy reliance if price goes above 2000 , rsi must be above 60 and stochastic above 55 and stock should be above 50 ema and sell position  below 13 ema"
-#         }
-#   ],
-#   temperature=1,
-#   max_tokens=256,
-#   top_p=1,
-#   frequency_penalty=0,
-#   presence_penalty=0
-# )
-# json_data = response["choices"][0]["message"]["content"]
-# data = json.loads(json_data)
+user_strategy = input("Enter a Strategy : ")
+response = openai.ChatCompletion.create(
+  model="gpt-3.5-turbo",
+  messages=[
+       {
+        "role": "system",
+        "content": systemPrompt
+        },
+        {
+        "role": "user",
+        "content": user_strategy
+        }
+  ],
+  temperature=1,
+  max_tokens=256,
+  top_p=1,
+  frequency_penalty=0,
+  presence_penalty=0
+)
+json_data = response["choices"][0]["message"]["content"]
+data = json.loads(json_data)
+# data = {'stockName': 'RELIANCE.NS', 'buyCriteria': {'price': {'conditions': [{'value': 2000, 'operation': '>'}]}, 'indicators': {'conditions': [{'name': 'rsi', 'value': 60, 'operation': '>'}, {'name': 'stochastic', 'value': 55, 'operation': '>'}, {'name': 'ema', 'value': 50, 'operation': '>'}]}}, 'sellCriteria': {'indicators': {'conditions': [{'name': 'ema', 'value': 13, 'operation': '<'}]}}}
 
 # # We can get data by our choice by giving days bracket
 start_date= "2017-01-01"
-
-data = {'stockName': 'RELIANCE.NS', 'buyCriteria': {'price': {'conditions': [{'value': 2000, 'operation': '>'}]}, 'indicators': {'conditions': [{'name': 'rsi', 'value': 60, 'operation': '>'}, {'name': 'stochastic', 'value': 55, 'operation': '>'}, {'name': 'ema', 'value': 50, 'operation': '>'}]}}, 'sellCriteria': {'indicators': {'conditions': [{'name': 'ema', 'value': 13, 'operation': '<'}]}}}
 print(data)
 getData(data["stockName"])
 # Read the CSV file into a pandas DataFrame
